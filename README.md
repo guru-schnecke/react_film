@@ -2,8 +2,7 @@
 
 Fork and clone the `react-film` repo.
 
-This project was created with `create-react-app`. Once you have the app cloned, you should run `npm install`. You can then run it with `npm run start`.
-
+Generate a new app with `npx create-react-app filmapp`
 ## Your Mission
 
 Today the plan is to identify the app components, create the overall structure, then split that structure into individual components. You'll pass films as props to each component and ultimately use iteration to render one component for each film. At the end of this exercise, you will have this app:
