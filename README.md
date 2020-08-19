@@ -1,220 +1,218 @@
-# ![](https://ga-dash.s3.amazonaws.com/production/assets/logo-9f88ae6c9c3871690e33280fcf557f33.png) 
+# ![](https://ga-dash.s3.amazonaws.com/production/assets/logo-9f88ae6c9c3871690e33280fcf557f33.png) You Do: Part 4 - Film Exercise
 
-## Film Exercise: State
+## Your Mission
 
-Your goal today is to add some events to your app. You'll keep these events simple for now; each will simply print a message to the console.
+Stop any project you currently have running; let's go back to the film application that you've started. You can run the app with `npm start`.
 
-In the future, however, you're going to be able to add films to your list of favorites, filter the films to see only your favorites, and see the details for a specific film. Your work today will make that possible.
+You're almost finished! Now, You need to:
+- Show the details of each movie by getting this information from TMDB.
+- Refactor your React app to make it as clean as possible.
 
-![](images/film-2.png)
+![](assets/bladerunner.png)
 
-### Tasks — Part 1: Adding Favorites
+### Task 1: Adding the API call
 
-#### Step 1: Add a New `Fave` Component
+We'll use the 3rd party [Axios API](https://www.npmjs.com/package/axios) to handle our API calls.
 
-Before we get started, let's install `@material-ui/icons` and `@material-ui/core` packages using `npm install` command.
+You already have a function where you want the API call to go (`handleDetailsClick` - when a user clicks for details of a movie, you'll call the API to get those details), so your `axios` task will work inside that function. You've set up the rest of your app correctly.
 
-After that, create a new component called `Fave` that will eventually handle whether or not a movie is a user's favorite. The `Fave` component's `render()` method should return the following:
+#### Step 1: Set up the API key
+
+This step seems complicated, but it isn't! Just take it one step at a time. Because TMDB isn't a public API, you'll need to get an API key to add to your `fetch()` call; then, you'll want to make sure to keep the key in a safe spot.
+
+- To gain access to the TMDB API, you'll need to get an API key from [TMDB](https://www.themoviedb.org).
+  - TMDB only gives API keys to users with accounts, sou'll have to sign up first (it's free). However, it will ask for your phone and address.
+  - Then, request an API key on your profile page ([further instructions](https://developers.themoviedb.org/3/getting-started)).
+  - Once you have your API key, you need to include it in your app. Since you **never want to store app secrets in your repository**, you'll use the [`dotenv`](https://github.com/motdotla/dotenv) package to keep the API key in a local file.
+
+
+- You'll need to install `dotenv`.
+  - Run `npm install --save dotenv` on the command line to add the dependency to your `package.json` file
+  - Create a new file at the **root** of your project called `.env.local` (accept the system warning).
+  - In your `.env.local` file, add the line `REACT_APP_TMDB_API_KEY=<Your TMDB API v3 KEY>`
+  - Make sure that you restart youor React server.
+
+*Note: The `.env.local` file is in your `.gitignore` by default when you create an app with `create-react-app`, so now your secret will never leak into your repository. It's important to note that since this is a front-end application, the built JavaScript will contain the key, which means end-users will be able to see it. However, that's fine for this practice app, since you'll only be running it locally.*
+
+- Now you have an API key saved in `dotenv`. Now, point your application to it: add the following to the top of your `TMDB.js` file:
+
+```js
+import dotenv from 'dotenv';
+
+dotenv.config();
+```
+
+- And replace `'<REPLACE_THIS_WITH_TMDB_API_KEY>'` with `process.env.REACT_APP_TMDB_API_KEY`.
+
+Your secrets are now set up!
+
+#### Step 2: Make a `const` called `url` with the API's URL
+
+Now that you have the API key to call for movie details, let's go back to making that call.
+
+In your `App.js` `handleDetailsClick` method, add the following `const` right above your `setState`:
+
+```JavaScript
+const url = `https://api.themoviedb.org/3/movie/${film.id}?api_key=${TMDB.api_key}&append_to_response=videos,images&language=en`
+```
+
+This is the URL to which you'll send your request to get detailed information about each film. You're passing the `film.id` and the `TMDB.api_key` as query string parameters.
+
+- *Note: Using `${film.id}` is a slightly faster shorthand for embedding variables in strings.*
+  - *For example, `const myString = "The " + film.id + " is great"` is the same as writing `const myString = "The ${film.id} is great"`.*
+
+
+#### Step 3: Make the API call with Axios
+
+Run `npm install axios` and add `import axios from "axios"` to the top of `App.js`.
+
+Now that you have the API key and URL set up, underneath the new URL variable, fetch the API.
+
+```JavaScript
+const url = `https://api.themoviedb.org/3/movie/${film.id}?api_key=${TMDB.api_key}&append_to_response=videos,images&language=en`
+
+axios({
+  method: 'GET',
+  url: url
+}).then(response => {
+  console.log(response) // take a look at what you get back!
+})
+```
+
+Try clicking a movie row in your browser - the data for it should appear in the console.
+
+#### Step 4: Set the state when the API call completes
+
+Let's now set your `current` state to be the object you get back from TMDB. Move the `setState` call into the API call.
+
+```JavaScript
+axios({
+  method: 'GET',
+  url: url
+}).then(response => {
+  console.log(response) // take a look at what you get back!
+  console.log(`Fetching details for ${film.title}`);
+  this.setState({ current: response.data })
+})
+```
+
+Now, you have the API call to get information about your chosen movie.
+
+### Task 2: Refactoring our app
+
+Before you continue to display the movie details to the user, let's clean up your application.
+
+Let's refactor any components that only have a `render()` method into functional components. Functional components are simpler and will gain performance benefits in future versions of React. It is considered good practice to use them wherever possible.
+
+#### Step 1: Refactor `FilmPoster.js`
+
+1. Replace the `class`/`extends` definition with a `function`. Remember that your function should accept a `props` argument.
+2. Remove the `render()` method, keeping only the `return` function.
+3. Replace all instances of `this.props` with simply `props`
+4. Remove `{Component}` from the React `import` at the top since you no longer use it (but still import `React`).
+
+Check in your browser to be sure the functionality hasn't changed.
+
+#### Step 2: Refactor `FilmDetails`
+
+You haven't written out the `FilmDetails` component yet, but it currently only renders UI. Therefore, you can also make it a functional component.
+
+Follow the same steps as above, and once again check in the browser for functionality.
+
+#### Step 3: Refactor `FilmRow`
+
+The `FilmRow` component currently only renders UI. Therefore, you can also make it a functional component.
+
+Follow the same steps as above, and once again check in the browser for functionality.
+
+
+### Task 3: Adding Film Details
+
+You're almost finished. Now, you'll render the film details you're receiving from the API (and currently logging to the console) in the browser window for the user.
+
+#### Step 1: Add image URLs for `FilmDetails`
+
+Above the `return`, add the following `const` definitions for fetching backdrop and posters:
+
+```js
+const backdropUrl = `https://image.tmdb.org/t/p/w1280/${props.film.backdrop_path}`
+const posterUrl = `https://image.tmdb.org/t/p/w780/${props.film.poster_path}`
+```
+
+#### Step 2: Render the empty case for `FilmDetails`
+
+When the app loads, there is no film selected to display in `FilmDetails`. When a user clicks on a film in the `FilmListing`, you want to fetch and show the details. Thus, there are two scenarios for `FilmDetails`:
+- The empty scenario (no film selected)
+- The populated scenario (a film selected)
+
+Start with the empty case. Add the following markup below the `.section-title`.
 
 ```html
-<div className="film-row-fave add_to_queue">
-    <AddToQueueIcon />
+<div className="film-detail">
+  <p>
+    <i className="material-icons">subscriptions</i>
+    <span>No film selected</span>
+  </p>
 </div>
 ```
 
-Don't forget to import the icon! `import AddToQueueIcon from '@material-ui/icons/AddToQueue';`
-In the `FilmRow` component, underneath the `film-summary` `div`, render the `Fave` component.
+#### Step 3: Conditionally render the current film
 
-In your browser, the icon should appear in the bottom-right corner of each film row.
+To start, create a new variable to hold on to your DOM tree. You'll conditionally assign the value to this variable depending on whether or not there's a film object passed in through the props.
 
-#### Step 2: Define a `handleClick` Function in `Fave`
+Add this below the two declared `const` variables:
 
-Inside the `Fave` component, define a function called `handleClick`. The function should accept an event (`e`) as an argument. Simply log out a message such as `"handling Fave click!"` for now.
+```js
+let details
+```
 
-Because you aren't using this anywhere yet, nothing should change.
+Now, you need to determine if there is a film to render or not.
 
-<details>
-  <summary>Hint</summary>
-  This will look like this:
-  <code> handleClick = (e) => {} </code>
-</details>
-
-#### Step 3: Add an `onClick` in `Fave`
-
-Now that you have a function that handles the user clicking a movie, connect it to the UI. In the `div` of `Fave`'s `render()` function, add a parameter of `onClick={this.handleClick}`.
-
-In your browser's JavaScript console, you should see the message `handleClick` print out when the `div` is clicked.
-
-That's all! Your click is not yet adding favorites, but it is working. Later, you will modify your app so that, when the `Fave` icon is clicked, your app adds or removes the selected movie from the user's favorites array.
-
-
-### Tasks — Part 2: Handling Filter Toggling
-
-Eventually, you'll want an `ALL` heading and a `FAVES` heading that are clickable links: When the user clicks `ALL`, the left sidebar will show all movies; when the user clicks `FAVES`, the left sidebar will show only their favorite movies. Now, you'll create the foundation for that functionality.
-
-#### Step 1: Define a `handleFilterClick` Function in `FilmListing`
-
-First, set up the function that will determine what movies are shown in the list. You'll need to be able to tell if you are showing the user all of the movies or if you are filtering down to show the user just some of the movies.
-
-In `FilmListing`, create a `handleFilterClick` function that takes a string `filter` as an argument. For now, just print a message that says `Setting filter to ` and the `filter` argument.
-
-This new function isn't connected to a button in the UI yet, so nothing should change.
-
-#### Step 2: Add Provided Markup to Display the `ALL`/`FAVES` Menu
-
-Add some markup to the `FilmListing` component so that you can have something worth clicking. You'll keep the `FILMS` heading; underneath it, you'll add two categories of `ALL` and `FAVES`. You're also setting up displaying the film's length, which you aren't using yet.
-
-Change the `FilmListing` component to render this:
+To do this, you just need to check if there's an `id` property on the `film` prop passed in to `FilmDetail`.
+- If not, you want to render the empty case you added in the last step.
+- Otherwise, you have a film to show, so you want to present the film details markup (don't copy this over yet):
 
 ```html
-<div className="film-list">
-    <h1 className="section-title">FILMS</h1>
-    <div className="film-list-filters">
-        <div className="film-list-filter">
-            ALL
-            <span className="section-count">{this.props.films.length}</span>
-        </div>
-        <div className="film-list-filter">
-            FAVES
-            <span className="section-count">0</span>
-        </div>
-    </div>
+<div className="film-detail is-hydrated">
+  <figure className="film-backdrop">
+    <img src={backdropUrl} alt="" />
+    <h1 className="film-title">{props.film.title}</h1>
+  </figure>
 
-    {allFilms}
+  <div className="film-meta">
+    <h2 className="film-tagline">{props.film.tagline}</h2>
+    <p className="film-detail-overview">
+      <img src={posterUrl} className="film-detail-poster" alt={props.film.title} />
+      {props.film.overview}
+    </p>
+  </div>
 </div>
 ```
 
-If you check your browser, these subheadings should appear in the left column.
+- Your task here is to conditionally assign the film details block of markup to the `details` variable if there is a current `id`.
+  - If there is not a current `id`, instead render the JSX for the empty case.
+- You still want to keep your `section-title`, which isn't part of this conditional.
+  - Therefore, the `return` statement of your `FilmDetails` function should finally look like this:
 
-#### Step 3: Add `onClick` Inside `FilmListing` to Trigger Filtering to `'faves'`
-
-Now you have an `ALL` section and a `FAVES` section; you can hook the latter up to that filtering function you just created.
-
-Add an `onClick` inside `FilmListing` so that, when `FAVES` is clicked, it calls the `handleFilterClick()` method you created with the `'faves'` parameter.
-
-<details>
-  <summary>Hint</summary>
-  This will look like this:
-  <code>onClick={() => this.handleFilterClick('faves')}</code>
-</details>
-
-
-
-Try clicking `FAVES`. Does it print to the console?
-
-#### Step 4: Add `onClick` Inside `FilmListing` to Trigger Filtering to `'all'`
-
-`FAVES` is now clickable, so the next step is to also make `ALL` clickable.
-
-Add an `onClick` inside `FilmListing` so that, when `ALL` is clicked, it calls the `handleFilterClick()` method with argument `'all'`.
-
-You should see a message in the console when you click either option. Later, instead of viewing a message, clicking either option will display the correct list of movies. But for now, you've ensured that the options are clickable, which is an important first step.
-
-### Tasks — Part 3: Handling Film Details
-
-You aren't going to create the large detailed view of the film that will be displayed in the right column (yet), but you're going to start setting up for it.
-
-#### Step 1: Define a `handleDetailsClick()` Function Inside `FilmRow`
-
-Inside `FilmRow`, define a function called `handleDetailsClick()`. The function should accept a `film` as an argument. Print out `Fetching details for ` and the film title to the console.
-
-Because this function isn't connected to the UI yet, nothing will change.
-
-#### Step 2: Add a Click Handler to Call the New Function With a Film Object
-
-Now, connect `handleDetailsClick()`. Add an `onClick` to `FilmRow` so that your message gets printed whenever you click on a film row (don't forget to pass the argument).
-
-You should be able to check this in your console by clicking any film row.
-
-#### Step 3: Add `stopPropagation()` to the `handleFave` Event Handler
-
-Hold up! Notice that you are now seeing two messages every time you click on the `Fave` icon/button. This is tricky, but the reason is because the event is propagating upward to the `FilmRow`. To make it so only one message appears, you'll need to stop the event propagation.
-
-To do this, add the line `e.stopPropagation()` inside the `Fave` component's `handleClick()` function.
-
-Try clicking the `Fave` icon/button; there's only one message now.
-
-### Tasks — Part 4: Add State to the `Fave` Component
-
-You have now triggered the events you'll need to update your app. Next, you'll add states to your app: Data in your React app that will change (such as if the user adds a film to their favorites list).
-
-#### Step 1: Create a Constructor for the `Fave` Component
-
-The first state you'll add will be whether or not a currently selected film is a user's favorite.
-
-#### Step 1: Set the Initial State
-
-By default, a film is not a user's favorite.
-
-Back to the `Fave` component; set `this.state` to an object with the key `isFave` and the value `false`. This will set up the initial state of the component.
-
-#### Step 2: Set the State in Your Event Handler
-
-When the user clicks the `Fave` icon/button to add or remove a film from their favorites list, the app should change the film's `isFave` state to reflect that.
-
-Inside of the `handleClick()` method in the `Fave` component, use `this.setState()` to toggle the value of `isFave`. "Toggle" means you always want to set the new value to the opposite of the current value.
-
-<details>
-  <summary>Hint — one way to do this could be:</summary>
-  <code>this.setState(prevState => ({
-			isFave:!prevState.isFave
-		}))</code>
-</details>
+```html
+return (
+  <div className="film-details">
+    <h1 className="section-title">Details</h1>
+    {detail}
+  </div>
+)
+```
 
 
+## Taking it further
 
-#### Step 3: Set the `className` on `div` Based on the `IsFave` State
+Here are some optional things you can do to deepen your knowledge and take this app further:
 
-You want the `className` attribute on the `div` to dynamically update when the state is changed. Currently, the `className` on the `div` is `add_to_queue`. However, if the film is already favorited, then the film is already in the queue. Therefore, when `isFave: true`, the `className` should instead be `remove_from_queue`.
-
-You need to make this happen:
-
-- When `isFave: true`, you want to give the `div` the class `remove_from_queue`. When `isFave: false`, you want to give the `div` the class `add_to_queue`.
-- You also want to change the text that's rendered in the `p` to be the same text as the class `remove_from_queue` or `add_to_queue`.
-
-**Note**: It will be easier to read if you determine which class to set first, store that value in a variable, and then insert that variable into the `className` attribute.
-
-<details>
-  <summary>Hint: A more advanced and succinct way of writing this function could be:</summary>
-  <code>const isFave = (this.state.isFave) ? 'remove_from_queue' : 'add_to_queue'</code>
-
-  You can drop this in the <code>render()</code> method. This checks the current <code>isFave</code> state for <code>true</code> or <code>false</code>.
-
-  If it's <code>true</code>, it sets the <code>const</code> variable <code>isFave</code> to <code>remove_from_queue</code>; when it's <code>false</code>, it sets the <code>const</code> variable <code>isFave</code> to <code>add_to_queue</code>.
-</details>
-
-Once you have this, clicking the `Add` icon in each row should change the icon that's displayed.
-
-### Tasks — Part 5: Add State to `FilmListing` Component
-
-Currently, you have the `ALL` and `FAVES` headings, but all films are always shown. Next, you'll add a state so that you can track if the user is currently filtering to view _all_ movies or only their _faves_.
-
-#### Step 1: Set the Initial State
-
-By default, a user will view the entire list of movies.
-
-In the `FilmListing` component, set `this.state` to an object with the key `filter` and the value `all`. This will set up the initial state of the component.
-
-#### Step 2: Set the State in Your Event Handler
-
-The `handleFilterClick()` method is the one that's called when a user clicks `ALL` or `FAVES`, so it's where you'll change the filter.
-
-Inside of the `handleFilterClick()` method in the `FilmListing` component, use `this.setState()` to set the value of `filter` to the value passed to the event handler.
-
-#### Step 3: Set the `className` on `div` based on `filter` State
-
-To give the user a clue as to where they are, the `ALL` and `FAVES` `div`s should change color depending on which is active. In the CSS, we've already set the colors using a class; you'll need to dynamically change the class of each `div`.
-
-Now, you want the `className` attribute on each `.film-list-filter` `div` to dynamically update when the state is changed. When `filter: all`, you want to give the `div` the class `is-active` to the `ALL` filter. When `filter: faves`, you want to give the `div` the class `is-active` to the `FAVES`.
-
-<details>
-  <summary>Hint: One way to do this could be by adding a line similar to this (different for each <code>div</code>) into the <code>className</code> parameter:</summary>
-  This line in particular checks if the <code>filter</code> state is currently <code>'all'</code>; if it is, it sets the value to <code>is-active</code>. If it isn't, it does nothing: <code>{this.state.filter === 'all' ? 'is-active' : ''}</code>.
-</details>
-
-Check your browser to make sure that everything works.
-
-#### Part 2 Complete!
-- Commit the day's work as Part-2 complete ! ~ 
-
-![](https://i.imgur.com/SOs0Z32.png)
+- Refactor `Fave` into a functional component.
+- Move the filters into a `FilmListingFilter` component.
+- Implement client-side routing to show multiple pages of films.
+- Go through the CSS and see how the app is styled (it uses both flexbox and CSS Grid).
+- Add a textarea for a review to each film detail and save that on the film object.
+- Show an icon in `FilmListing` for all films with reviews.
+- Show the `fave` state of a film on `FilmDetails`.
+- Add any other features you can think of!
